@@ -17,7 +17,6 @@ Boostcamp A.I. Tech DKT 트랙 베이스라인 코드입니다.
 
 ```
 ├── code
-│   ├── README.md
 │   ├── __init__.py
 │   ├── dkt
 │   │   ├── README.md
@@ -36,18 +35,19 @@ Boostcamp A.I. Tech DKT 트랙 베이스라인 코드입니다.
 │   │   └── train.py
 │   └── lightgcn
 │       ├── README.md
-│       ├── inference.py
 │       ├── lightgcn
 │       │   ├── args.py
 │       │   ├── datasets.py
 │       │   ├── trainer.py
 │       │   └── utils.py
+│       ├── inference.py
 │       ├── requirements.txt
 │       └── train.py
 ├── data
 │   ├── sample_submission.csv
 │   ├── test_data.csv
 │   └── train_data.csv
+├── README.md
 └── level_2_dkt.sh
 ```
 ---
