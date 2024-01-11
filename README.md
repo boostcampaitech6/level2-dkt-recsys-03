@@ -1,4 +1,4 @@
-# Deep Knowledge Tracing Baseline Code
+# Deep Knowledge Tracing (DKT)
 
 ## OverVIew
 Boostcamp A.I. Tech DKT 트랙 베이스라인 코드입니다.
