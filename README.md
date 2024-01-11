@@ -48,6 +48,7 @@ Boostcamp A.I. Tech DKT 트랙 베이스라인 코드입니다.
 │   ├── test_data.csv
 │   └── train_data.csv
 ├── README.md
+├── .gitignore
 └── level_2_dkt.sh
 ```
 ---
