@@ -48,7 +48,13 @@ def run(
         edge, label = train_data["edge"], train_data["label"]
         label = label.to("cpu").detach().numpy()
         valid_data = dict(edge=edge[:, eids], label=label[eids])
-
+        
+        # valid 데이터로 뽑힌 train 데이터 삭제
+        edge = np.array(edge)
+        train_data['edge'] = torch.tensor(np.delete(edge, eids, axis=1))
+        label = np.array(label)
+        train_data['label'] = torch.tensor(np.delete(label, eids))
+        
     logger.info(f"Training Started : n_epochs={n_epochs}")
     best_auc, best_epoch = 0, -1
     for e in range(n_epochs):
