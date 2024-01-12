@@ -24,6 +24,8 @@ pip install -r requirements.txt
 conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit=11.3 -c pytorch -y
 echo "DKT 가상환경 설정 완료"
 
+conda deactivate
+
 # lightgcn 가상환경 설정
 cd ..
 cd lightgcn
