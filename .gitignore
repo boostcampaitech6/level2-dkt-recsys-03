@@ -1,3 +1,11 @@
 data/sample_submission.csv
 data/train_data.csv
 data/test_data.csv
+code/lightgcn/models/*
+code/lightgcn/wandb/*
+code/lightgcn/run.log
+code/lightgcn/lightgcn/__pycache__/*
+code/dkt/models/*
+code/dkt/wandb/*
+code/dkt/run.log
+code/dkt/dkt/__pycache__/*
