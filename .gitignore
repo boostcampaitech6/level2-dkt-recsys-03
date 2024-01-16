@@ -11,3 +11,12 @@ code/dkt/run.log
 code/dkt/dkt/__pycache__/*
 code/lgbm/run.log
 code/lgbm/outputs/*
+code/.DS_Store
+code/README.md
+code/dkt/.DS_Store
+code/dkt/requirements.txt
+code/dkt/asset/assessmentItemID_classes.npy
+code/dkt/asset/KnowledgeTag_classes.npy
+code/dkt/asset/testId_classes.npy
+code/dkt/outputs/submission.csv
+code/lgbm/run.log
