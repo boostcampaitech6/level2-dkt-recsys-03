@@ -22,7 +22,9 @@ logger = get_logger(logger_conf=logging_conf)
 def run(args,
         train_data: np.ndarray,
         valid_data: np.ndarray,
+        kfold_auc_list: list,
         model: nn.Module):
+    
     train_loader, valid_loader = get_loaders(args=args, train=train_data, valid=valid_data)
 
     # For warmup scheduler which uses step interval
@@ -76,6 +78,8 @@ def run(args,
         if args.scheduler == "plateau":
             scheduler.step(best_auc)
 
+    # auc 결과 list에 저장하여 비교
+    kfold_auc_list.append(best_auc)
 
 def train(train_loader: torch.utils.data.DataLoader,
           model: nn.Module,
