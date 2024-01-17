@@ -78,6 +78,8 @@ def prepare_dataset(args):
     test_df = feature_engineering(test_df)
     
     train_df, valid_df = custom_train_test_split(train_df)
+    # LEAVE LAST INTERACTION ONLY
+    test_df = test_df[test_df['userID'] != test_df['userID'].shift(-1)]
     
     X_train = train_df[args.feats]
     y_train = train_df['answerCode']
