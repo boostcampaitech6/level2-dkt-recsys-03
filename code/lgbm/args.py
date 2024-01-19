@@ -21,14 +21,16 @@ def parse_args():
     parser.add_argument('--early_stopping_round', default=3, type=int, help='')
     parser.add_argument('--max_bin', default=100, type=int, help='')
     
-    parser.add_argument('--feats', default=['KnowledgeTag', 'user_correct_answer', 
-                                            'user_total_answer','user_acc', 'userID',
-                                            'test_mean', 'test_sum', 'test_count', 
-                                            'tag_mean','tag_sum','tag_count', 
-                                            'assessment_mean', 'assessment_sum','assessment_count',
-                                            
-                                            ], 
-                        type=list, help='')
+    parser.add_argument('--feats', default=['KnowledgeTag', 'encoded_testId', 'user_correct_answer', 'user_total_answer',
+                        'user_acc', 'test_mean','tag_mean', 'test_sum', 'tag_sum', 'item_mean','item_sum',
+                        'correct_shift_1', 'correct_shift_2',
+                        'correct_shift_3', 'elapsed', 'elapsed_median',
+                        'hour', 'correct_per_hour', 'hour_mode', 'normalized_elapsed',
+                        'relative_time','month','month_mean',
+                        'past_KnowledgeTag_count', 'past_KnowledgeTag_correct', 'average_KnowledgeTag_correct', 'avg_elapsed_3',
+                        'past_assessmentItemID_count', 'past_assessmentItemID_correct', 'average_assessmentItemID_correct',
+                        'past_testId_correct', 'average_testId_correct','past_testId_count'
+                        ], type=list, help='')
     
     args = parser.parse_args()
     return args

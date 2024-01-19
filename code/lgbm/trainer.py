@@ -15,7 +15,7 @@ def get_params(args):
             #'max_bin':args.max_bin,
             #'learning_rate':args.lr,
             #'num_iterations':args.n_iterations,
-            #'metric':['binary_logloss', 'auc']
+            'metric':['auc']
             }
     return config
 
