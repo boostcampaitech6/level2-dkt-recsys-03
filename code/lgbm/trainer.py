@@ -3,6 +3,10 @@ import numpy as np
 import lightgbm as lgb
 from sklearn.metrics import accuracy_score, roc_auc_score
 from wandb.lightgbm import wandb_callback, log_summary
+from wandb import Table
+import wandb
+import matplotlib.pyplot as plt
+import shap
 
 def get_params(args):
     config = {
@@ -19,6 +23,32 @@ def get_params(args):
             }
     return config
 
+def feature_importance(model, valid):
+    
+    # split 기반 피처 중요도 계산 및 로깅
+    feat_imps_split = model.feature_importance(importance_type='split')
+    feats = model.feature_name()
+    fi_data_split = [[feat, feat_imp] for feat, feat_imp in zip(feats, feat_imps_split)]
+    table_split = wandb.Table(data=fi_data_split, columns=["Feature", "Split Importance"])
+    wandb.log({"Feature Importance (Split)": wandb.plot.bar(table_split, "Feature", "Split Importance", title="Feature Importance (Split)")}, commit=False)
+
+    # gain 기반 피처 중요도 계산 및 로깅
+    feat_imps_gain = model.feature_importance(importance_type='gain')
+    fi_data_gain = [[feat, feat_imp] for feat, feat_imp in zip(feats, feat_imps_gain)]
+    table_gain = wandb.Table(data=fi_data_gain, columns=["Feature", "Gain Importance"])
+    wandb.log({"Feature Importance (Gain)": wandb.plot.bar(table_gain, "Feature", "Gain Importance", title="Feature Importance (Gain)")}, commit=False)
+
+    # Shapley Value 계산 및 로깅
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(valid)
+    plt.figure(figsize=(10, 5))
+    shap.summary_plot(shap_values[1], valid, plot_type="dot", feature_names=feats)
+    wandb.log({"shap_dot_plot": wandb.Image(plt)}, commit=False)
+    plt.figure(figsize=(10, 5))
+    shap.summary_plot(shap_values[1], valid, plot_type="bar", feature_names=feats)
+    wandb.log({"shap_summary_plot": wandb.Image(plt)}, commit=False)
+
+
 def train(args, lgb_train, lgb_valid):
     X_valid = lgb_valid.data
     y_valid = lgb_valid.label
@@ -31,6 +61,7 @@ def train(args, lgb_train, lgb_valid):
     callbacks = [wandb_callback()]
     )
     
+    feature_importance(model, X_valid) #Feature importance를 로깅
     log_summary(model, save_model_checkpoint=True)
     
     preds = model.predict(X_valid)
