@@ -18,7 +18,7 @@ def get_params(args):
             #'early_stopping_round':args.early_stopping_round,
             'max_bin':args.max_bin,
             'learning_rate':args.lr,
-            #'num_iterations':args.n_iterations,
+            'num_iterations':args.n_iterations,
             'metric':['auc']
             }
     return config
@@ -57,7 +57,7 @@ def train(args, lgb_train, lgb_valid):
     get_params(args),
     lgb_train,
     valid_sets=[lgb_train, lgb_valid],
-    num_boost_round=500, 
+    #num_boost_round=500, 
     callbacks = [wandb_callback()]
     )
     
