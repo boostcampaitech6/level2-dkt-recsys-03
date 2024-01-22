@@ -12,12 +12,12 @@ def get_params(args):
     config = {
             'seed':args.seed,
             'objective': 'binary',
-            #'num_leaves': args.num_leaves,
-            #'min_data_in_leaf':args.min_data_in_leaf,
-            #'max_depth':args.max_depth,
+            'num_leaves': args.num_leaves,
+            'min_data_in_leaf':args.min_data_in_leaf,
+            'max_depth':args.max_depth,
             #'early_stopping_round':args.early_stopping_round,
-            #'max_bin':args.max_bin,
-            #'learning_rate':args.lr,
+            'max_bin':args.max_bin,
+            'learning_rate':args.lr,
             #'num_iterations':args.n_iterations,
             'metric':['auc']
             }

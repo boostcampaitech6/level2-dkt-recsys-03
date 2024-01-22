@@ -18,9 +18,9 @@ def feature_engineering(df, is_train):
 
     #유저별 시퀀스를 고려하기 위해 아래와 같이 정렬
     df.sort_values(by=['userID','Timestamp'], inplace=True)
-
     df['Timestamp'] = pd.to_datetime(df['Timestamp'])
 
+    ## 기본 정보 ##
     # assessmentItemID 분리해서 시험지ID, 시험지 대분류, 시험지 소분류, 문제 번호 생성
     df['testID1'] = df['assessmentItemID'].apply(lambda x: x[1:4])
     df['testID2'] = df['assessmentItemID'].apply(lambda x: x[4:7])
@@ -40,16 +40,22 @@ def feature_engineering(df, is_train):
 
     # testId와 KnowledgeTag, 문제의 전체 정답률은 한번에 계산
     # 아래 데이터는 제출용 데이터셋에 대해서도 재사용
-    correct_t = df.groupby(['testId'])['answerCode'].agg(['mean', 'sum'])
-    correct_t.columns = ["test_mean", 'test_sum']
-    correct_k = df.groupby(['KnowledgeTag'])['answerCode'].agg(['mean', 'sum'])
-    correct_k.columns = ["tag_mean", 'tag_sum']
-    correct_i = df.groupby(['assessmentItemID'])['answerCode'].agg(['mean', 'sum'])
-    correct_i.columns = ['item_mean', 'item_sum']
+    correct_t = df.groupby(['testId'])['answerCode'].agg(['mean', 'sum', 'count'])
+    correct_t.columns = ['test_mean', 'test_sum', 'test_count']
+
+    correct_k = df.groupby(['KnowledgeTag'])['answerCode'].agg(['mean', 'sum', 'count'])
+    correct_k.columns = ['tag_mean', 'tag_sum', 'tag_count']
+
+    correct_i = df.groupby(['assessmentItemID'])['answerCode'].agg(['mean', 'sum', 'count'])
+    correct_i.columns = ['item_mean', 'item_sum', 'item_count']
 
     df = pd.merge(df, correct_t, on=['testId'], how="left")
     df = pd.merge(df, correct_k, on=['KnowledgeTag'], how="left")
     df = pd.merge(df, correct_i, on=['assessmentItemID'], how='left')
+
+    df['test_normalized_mean'] = (df['test_mean'] - df['test_mean'].mean()) / df['test_mean'].std()
+    df['tag_normalized_mean'] = (df['tag_mean'] - df['tag_mean'].mean()) / df['tag_mean'].std()
+    df['item_normalized_mean'] = (df['item_mean'] - df['item_mean'].mean()) / df['item_mean'].std()
 
     # 미래 정보
     df['correct_shift_-3'] = df.groupby('userID')['answerCode'].shift(-3)
@@ -60,21 +66,26 @@ def feature_engineering(df, is_train):
     df['correct_shift_1'] = df.groupby('userID')['answerCode'].shift(1)
     df['correct_shift_2'] = df.groupby('userID')['answerCode'].shift(2)
     df['correct_shift_3'] = df.groupby('userID')['answerCode'].shift(3)
-    
+    df['correct_shift_4'] = df.groupby('userID')['answerCode'].shift(4)
+    df['correct_shift_5'] = df.groupby('userID')['answerCode'].shift(5)
+
     # 미래 정답 정보 (userID와 testId에 따라 분리)
     df['correct_ut_shift_-1'] = df.groupby(['userID','testId'])['answerCode'].shift(-1)
     df['correct_ut_shift_-2'] = df.groupby(['userID','testId'])['answerCode'].shift(-2)
     df['correct_ut_shift_-3'] = df.groupby(['userID','testId'])['answerCode'].shift(-3)
     
-    # 과거 정답 정보 (userID와 testId 기준)
+    # 과거 정답 정보 (userID와 testId 기준) 
     df['correct_ut_shift_1'] = df.groupby(['userID','testId'])['answerCode'].shift(1)
     df['correct_ut_shift_2'] = df.groupby(['userID','testId'])['answerCode'].shift(2)
     df['correct_ut_shift_3'] = df.groupby(['userID','testId'])['answerCode'].shift(3)
+    df['correct_ut_shift_4'] = df.groupby(['userID','testId'])['answerCode'].shift(4)
+    df['correct_ut_shift_5'] = df.groupby(['userID','testId'])['answerCode'].shift(5)
 
     # 문제 풀이 시간 (userID와 testId에 따라 분리, 마지막은 이전 시간으로 결측치 대체)
     df['elapsed'] = (df.groupby(['userID','testId'])['Timestamp'].shift(-1) - df['Timestamp']).apply(lambda x: x.seconds)
     df['elapsed'] = df['elapsed'].ffill().astype('int')
 
+    
     # time 이상치 처리//위쪽만 처리
     iqr = df['elapsed'].quantile(0.75) - df['elapsed'].quantile(0.25)
     threshold = df['elapsed'].quantile(0.75) + iqr*1.5
@@ -83,6 +94,7 @@ def feature_engineering(df, is_train):
             return threshold+10 #이상치 기준 +10
         return v
     df['elapsed'] = df['elapsed'].apply(outlier)
+    
 
     # 문제 풀이 시간 중간값
     agg_df = df.groupby('userID')['elapsed'].agg(['median'])
@@ -104,8 +116,35 @@ def feature_engineering(df, is_train):
     df['is_night'] = df['hour_mode'] > 12
 
     # 시간 정규화
-    df['normalized_elapsed'] = df.groupby('userID')['elapsed'].transform(lambda x: (x - x.mean())/x.std())
+    df['normalized_elapsed'] = df['elapsed'].transform(lambda x: (x - x.mean())/x.std())
+    df['normalized_elapsed_user'] = df.groupby('userID')['elapsed'].transform(lambda x: (x - x.mean())/x.std())
+    df['normalized_elapsed_test'] = df.groupby('testId')['elapsed'].transform(lambda x: (x - x.mean())/x.std())
+    df['noramalized_elapsed_user_test'] = df.groupby(['userID','testId'])['elapsed'].transform(lambda x: (x - x.mean()) / x.std())
 
+    df['normalized_elapsed_shift_1'] = df.groupby(['userID','testId'])['normalized_elapsed'].shift(1)
+    df['normalized_elapsed_shift_2'] = df.groupby(['userID','testId'])['normalized_elapsed'].shift(2)
+    df['normalized_elapsed_shift_3'] = df.groupby(['userID','testId'])['normalized_elapsed'].shift(3)
+    df['normalized_elapsed_shift_1'] = df['normalized_elapsed_shift_1'].ffill()
+    df['normalized_elapsed_shift_2'] = df['normalized_elapsed_shift_2'].ffill()
+    df['normalized_elapsed_shift_3'] = df['normalized_elapsed_shift_3'].ffill()
+    df['normalized_elapsed_user_shift_1'] = df.groupby(['userID','testId'])['normalized_elapsed_user'].shift(1)
+    df['normalized_elapsed_user_shift_2'] = df.groupby(['userID','testId'])['normalized_elapsed_user'].shift(2)
+    df['normalized_elapsed_user_shift_3'] = df.groupby(['userID','testId'])['normalized_elapsed_user'].shift(3)
+    df['normalized_elapsed_user_shift_1'] = df['normalized_elapsed_user_shift_1'].ffill()
+    df['normalized_elapsed_user_shift_2'] = df['normalized_elapsed_user_shift_2'].ffill()
+    df['normalized_elapsed_user_shift_3'] = df['normalized_elapsed_user_shift_3'].ffill()    
+    df['normalized_elapsed_test_shift_1'] = df.groupby(['userID','testId'])['normalized_elapsed_test'].shift(1)
+    df['normalized_elapsed_test_shift_2'] = df.groupby(['userID','testId'])['normalized_elapsed_test'].shift(2)
+    df['normalized_elapsed_test_shift_3'] = df.groupby(['userID','testId'])['normalized_elapsed_test'].shift(3)
+    df['normalized_elapsed_test_shift_1'] = df['normalized_elapsed_test_shift_1'].ffill()
+    df['normalized_elapsed_test_shift_2'] = df['normalized_elapsed_test_shift_2'].ffill()
+    df['normalized_elapsed_test_shift_3'] = df['normalized_elapsed_test_shift_3'].ffill()    
+    df['normalized_elapsed_user_test_shift_1'] = df.groupby(['userID','testId'])['noramalized_elapsed_user_test'].shift(1)
+    df['normalized_elapsed_user_test_shift_2'] = df.groupby(['userID','testId'])['noramalized_elapsed_user_test'].shift(2)
+    df['normalized_elapsed_user_test_shift_3'] = df.groupby(['userID','testId'])['noramalized_elapsed_user_test'].shift(3)
+    df['normalized_elapsed_user_test_shift_1'] = df['normalized_elapsed_user_test_shift_1'].ffill()
+    df['normalized_elapsed_user_test_shift_2'] = df['normalized_elapsed_user_test_shift_2'].ffill()
+    df['normalized_elapsed_user_test_shift_3'] = df['normalized_elapsed_user_test_shift_3'].ffill()
     # 상대적 시간
     df['relative_time'] = df.groupby('userID').apply(lambda x: x['elapsed'] - x['elapsed'].median()).values
 
@@ -135,17 +174,26 @@ def feature_engineering(df, is_train):
         df['shift'] = df.groupby(feature)['answerCode'].shift().fillna(0)
         df[f'past_{feature}_correct'] = df.groupby(feature)['shift'].cumsum()
         df[f'average_{feature}_correct'] = (df[f'past_{feature}_correct'] / df[f'past_{feature}_count']).fillna(0)
-        
+    
     # User와 Feature 별 문제 수 / 정답 수 / 정답률
     feature_list = ['assessmentItemID','testId','testID1','testID2','testNum','KnowledgeTag']
     for feature in feature_list:
-        df[f'past_user_{feature}_count'] = df.groupby(feature).cumcount()
-        df['shift'] = df.groupby(feature)['answerCode'].shift().fillna(0)
-        df[f'past_user_{feature}_correct'] = df.groupby(feature)['shift'].cumsum()
+        df[f'past_user_{feature}_count'] = df.groupby(['userID', feature]).cumcount()
+        df['shift'] = df.groupby(['userID', feature])['answerCode'].shift().fillna(0)
+        df[f'past_user_{feature}_correct'] = df.groupby(['userID', feature])['shift'].cumsum()
         df[f'average_user_{feature}_correct'] = (df[f'past_user_{feature}_correct'] / df[f'past_user_{feature}_count']).fillna(0)
     
     df = df.drop('shift', axis=1)
     
+    #문제 정답률 shift
+    df['average_assessmentItemID_correct_shift_1'] = df.groupby(['userID','testId'])['average_assessmentItemID_correct'].shift(1)
+    df['average_assessmentItemID_correct_shift_2'] = df.groupby(['userID','testId'])['average_assessmentItemID_correct'].shift(2)
+    df['average_assessmentItemID_correct_shift_3'] = df.groupby(['userID','testId'])['average_assessmentItemID_correct'].shift(3)
+    df['average_assessmentItemID_correct_shift_1'] = df['average_assessmentItemID_correct_shift_1'].ffill()
+    df['average_assessmentItemID_correct_shift_2'] = df['average_assessmentItemID_correct_shift_2'].ffill()
+    df['average_assessmentItemID_correct_shift_3'] = df['average_assessmentItemID_correct_shift_3'].ffill()
+
+
     # 최근 3문제를 푼 시간의 평균
     df['avg_elapsed_3'] = df.groupby('userID')['elapsed'].rolling(window = 3, min_periods=1).mean().values
     df['avg_elapsed_3'] = df['avg_elapsed_3'].shift(1).fillna(0)
@@ -167,7 +215,7 @@ def feature_engineering(df, is_train):
     df['assessment_class_sum'] = df.groupby(['userID', 'assessment_class'])['answerCode'].cumsum()
     df['assessment_class_count'] = df.groupby(['userID', 'assessment_class'])['answerCode'].cumcount()
     df['assessment_class_mean'] = df['assessment_class_sum'] / df['assessment_class_count']
-    mean_solved_time = df.groupby('assessment_class')['normalized_elapsed'].mean().to_dict()
+    mean_solved_time = df.groupby('assessment_class')['normalized_elapsed_user'].mean().to_dict()
     df['assessment_class_mean_time'] = df['assessment_class'].map(mean_solved_time)
     
     # 최근 3개 문제 풀이 갯수, 정답 횟수, 정답률
@@ -177,8 +225,7 @@ def feature_engineering(df, is_train):
     df['recent_mean'] = df['recent_mean'].shift(1).fillna(0)
     
     ################### 재원 ######################
-    ## 시간 정규화 & 날짜 생성 (소요시간 : 5min) ##
-    df['noramalized_time'] = df.groupby(['userID','testId'])['Timestamp'].transform(lambda x: (x - x.mean()) / x.std())
+
     ## Relative Feature 생성 ##
     AnswerRate = df.groupby('assessmentItemID')['answerCode'].mean()
     df['testIDAnswerRate'] = df['assessmentItemID'].map(AnswerRate)
@@ -221,13 +268,17 @@ def custom_train_test_split(df, ratio=0.7, split=True):
 def prepare_dataset(args):
     train_df = pd.read_csv(os.path.join(args.data_dir, 'train_data.csv'))
     test_df = pd.read_csv(os.path.join(args.data_dir, "test_data.csv"))
-    
-    train_df = feature_engineering(train_df, True)
-    test_df = feature_engineering(test_df, False)
+
+    test_df['answerCode'].replace(-1, 0.5, inplace=True) #예측 타깃 answercode 0.5로 변경
+    total_df = pd.concat([train_df, test_df], ignore_index=True) # train,test를 합하기
+    total_df.sort_values(by=['userID','Timestamp'], inplace=True)
+   
+    train_df = feature_engineering(train_df, True)    
+    test_df = feature_engineering(total_df, False) #train,test로 test의 FE 진행
     
     train_df, valid_df = custom_train_test_split(train_df)
     # LEAVE LAST INTERACTION ONLY
-    test_df = test_df[test_df['userID'] != test_df['userID'].shift(-1)]
+    test_df = test_df[test_df['answerCode'] == 0.5] #예측 타깃 : 0.5
     
     X_train = train_df[args.feats]
     y_train = train_df['answerCode']
