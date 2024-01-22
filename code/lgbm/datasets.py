@@ -50,6 +50,11 @@ def feature_engineering(df, is_train):
     df = pd.merge(df, correct_t, on=['testId'], how="left")
     df = pd.merge(df, correct_k, on=['KnowledgeTag'], how="left")
     df = pd.merge(df, correct_i, on=['assessmentItemID'], how='left')
+    
+    #testId, KnowledgeTag, 문제 갯수
+    df['test_count'] = df['test_sum'] / df['test_mean']
+    df['tag_count'] = df['tag_sum'] / df['tag_mean']
+    df['item_count'] = df['item_sum'] / df['item_mean']
 
     # 미래 정보
     df['correct_shift_-3'] = df.groupby('userID')['answerCode'].shift(-3)
