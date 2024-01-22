@@ -27,6 +27,7 @@ def main(args):
     
     if args.split_method == "general":
         print("Using general Method")
+        none_list = []
         train_data, valid_data = preprocess.split_data(data=train_data)
         wandb.init(project=args.wandb_project_name, config=vars(args))
         
@@ -34,25 +35,25 @@ def main(args):
         model: torch.nn.Module = trainer.get_model(args=args).to(args.device)
         
         logger.info("Start Training ...")
-        trainer.run(args=args, train_data=train_data, valid_data=valid_data, model=model)
+        trainer.run(args=args, train_data=train_data, valid_data=valid_data, kfold_auc_list=none_list, model=model)
     
     elif args.split_method == "kfold":
         print("Using k_fold")
         n_splits = args.n_splits
         kfold_auc_list = []
         kf = KFold(n_splits=n_splits)
+        wandb.init(project=args.wandb_project_name, config=vars(args))
+
         
         #---------------------KFOLD 학습 진행---------------------
         for k_th, (train_idx, valid_idx) in enumerate(kf.split(train_data)):
             train_set = torch.utils.data.Subset(train_data, indices = train_idx) # KFold에서 나온 인덱스로 훈련 셋 생성
             val_set = torch.utils.data.Subset(train_data, indices = valid_idx) # KFold에서 나온 인덱스로 검증 셋 생성
 
-            wandb.init(project=args.wandb_project_name, config=vars(args))
-            
             logger.info("Building Model ...")
             model: torch.nn.Module = trainer.get_model(args=args).to(args.device)
 
-            trainer.run(args, train_set, val_set, kfold_auc_list, model = model)
+            trainer.run(args=args, train_data=train_set, valid_data=val_set, kfold_auc_list=kfold_auc_list, model = model)
 
             
         #---------------------KFold 결과 출력----------------------
