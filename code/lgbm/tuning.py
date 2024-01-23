@@ -1,5 +1,5 @@
-# Hyper parameter tunning
-# 사용방법 : python tunning.py
+# Hyper parameter tuning
+# 사용방법 : python tuning.py
 import os
 import wandb
 import lightgbm as lgb
