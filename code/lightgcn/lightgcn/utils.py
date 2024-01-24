@@ -4,6 +4,8 @@ import random
 import numpy as np
 import torch
 
+from lightgcn.args import parse_args
+
 
 class process:
     def __init__(self, logger, name):
@@ -36,6 +38,8 @@ def get_logger(logger_conf: dict):
     return logger
 
 
+args = parse_args()
+os.makedirs(name='./logs/', exist_ok=True)
 logging_conf = {  # only used when 'user_wandb==False'
     "version": 1,
     "formatters": {
@@ -52,7 +56,7 @@ logging_conf = {  # only used when 'user_wandb==False'
             "class": "logging.FileHandler",
             "level": "DEBUG",
             "formatter": "basic",
-            "filename": "run.log",
+            "filename": f"./logs/run_{args.output_name}.log",
         },
     },
     "root": {"level": "INFO", "handlers": ["console", "file_handler"]},
