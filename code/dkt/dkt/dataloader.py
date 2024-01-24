@@ -3,10 +3,12 @@ import random
 import time
 from datetime import datetime
 from typing import Tuple
+from easydict import EasyDict
 
 import numpy as np
 import pandas as pd
 import torch
+from torch.nn.utils.rnn import pad_sequence
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -34,10 +36,16 @@ class Preprocess:
             random.seed(seed)  # fix to default seed 0
             random.shuffle(data)
 
-        size = int(len(data) * ratio)
-        data_1 = data[:size]
-        data_2 = data[size:]
-        return data_1, data_2
+        if self.args.split_method == "general":
+            size = int(len(data) * ratio)
+            data_1 = data[:size]
+            data_2 = data[size:]
+            return data_1, data_2
+        
+        elif self.args.split_method == "kfold":
+            data_1 = data[:]
+            data_2 = None
+            return data_1, data_2
 
     def __save_labels(self, encoder: LabelEncoder, name: str) -> None:
         le_path = os.path.join(self.args.asset_dir, name + "_classes.npy")
@@ -63,6 +71,7 @@ class Preprocess:
                 df[col] = df[col].apply(
                     lambda x: x if str(x) in le.classes_ else "unknown"
                 )
+                
 
             # 모든 컬럼이 범주형이라고 가정
             df[col] = df[col].astype(str)
@@ -77,196 +86,10 @@ class Preprocess:
 
         df["Timestamp"] = df["Timestamp"].apply(convert_time)
         return df
-
+    
     def __feature_engineering(self, df: pd.DataFrame, is_train: bool = True) -> pd.DataFrame:
-        # TODO: Fill in if needed
-        
-        if os.path.exists(os.path.join(self.args.data_dir, "FE_train.csv")) and is_train==True:
-            df = pd.read_csv(os.path.join(self.args.data_dir, "FE_train.csv"))
-            return df
-        elif os.path.exists(os.path.join(self.args.data_dir, "FE_test.csv")) and is_train==False:
-            df = pd.read_csv(os.path.join(self.args.data_dir, "FE_test.csv"))
-            return df
-
-        #유저별 시퀀스를 고려하기 위해 아래와 같이 정렬
-        df.sort_values(by=['userID','Timestamp'], inplace=True)
-
-        df['Timestamp'] = pd.to_datetime(df['Timestamp'])
-
-        # assessmentItemID 분리해서 시험지ID, 시험지 대분류, 시험지 소분류, 문제 번호 생성
-        df['testID1'] = df['assessmentItemID'].apply(lambda x: x[1:4])
-        df['testID2'] = df['assessmentItemID'].apply(lambda x: x[4:7])
-        df['testNum'] = df['assessmentItemID'].apply(lambda x: x[7:])
-        
-        #라벨 인코딩
-        df['encoded_assessmentItemID'] = LabelEncoder().fit(df['assessmentItemID']).transform(df['assessmentItemID'])
-        df['encoded_testId'] = LabelEncoder().fit(df['testId']).transform(df['testId'])
-        df['encoded_testID1'] = LabelEncoder().fit(df['testID1']).transform(df['testID1'])
-        df['encoded_testID2'] = LabelEncoder().fit(df['testID2']).transform(df['testID2'])
-        df['encoded_testNum'] = LabelEncoder().fit(df['testNum']).transform(df['testNum'])    
-
-        #유저들의 문제 풀이수, 정답 수, 정답률을 시간순으로 누적해서 계산
-        df['user_correct_answer'] = df.groupby('userID')['answerCode'].transform(lambda x: x.cumsum().shift(1))
-        df['user_total_answer'] = df.groupby('userID')['answerCode'].cumcount()
-        df['user_acc'] = df['user_correct_answer']/df['user_total_answer']
-
-        # testId와 KnowledgeTag, 문제의 전체 정답률은 한번에 계산
-        # 아래 데이터는 제출용 데이터셋에 대해서도 재사용
-        correct_t = df.groupby(['testId'])['answerCode'].agg(['mean', 'sum'])
-        correct_t.columns = ["test_mean", 'test_sum']
-        correct_k = df.groupby(['KnowledgeTag'])['answerCode'].agg(['mean', 'sum'])
-        correct_k.columns = ["tag_mean", 'tag_sum']
-        correct_i = df.groupby(['assessmentItemID'])['answerCode'].agg(['mean', 'sum'])
-        correct_i.columns = ['item_mean', 'item_sum']
-
-        df = pd.merge(df, correct_t, on=['testId'], how="left")
-        df = pd.merge(df, correct_k, on=['KnowledgeTag'], how="left")
-        df = pd.merge(df, correct_i, on=['assessmentItemID'], how='left')
-
-        # 미래 정보
-        df['correct_shift_-3'] = df.groupby('userID')['answerCode'].shift(-3)
-        df['correct_shift_-2'] = df.groupby('userID')['answerCode'].shift(-2)
-        df['correct_shift_-1'] = df.groupby('userID')['answerCode'].shift(-1)
-
-        # 과거 정답 정보
-        df['correct_shift_1'] = df.groupby('userID')['answerCode'].shift(1)
-        df['correct_shift_2'] = df.groupby('userID')['answerCode'].shift(2)
-        df['correct_shift_3'] = df.groupby('userID')['answerCode'].shift(3)
-        
-        # 미래 정답 정보 (userID와 testId에 따라 분리)
-        df['correct_ut_shift_-1'] = df.groupby(['userID','testId'])['answerCode'].shift(-1)
-        df['correct_ut_shift_-2'] = df.groupby(['userID','testId'])['answerCode'].shift(-2)
-        df['correct_ut_shift_-3'] = df.groupby(['userID','testId'])['answerCode'].shift(-3)
-        
-        # 과거 정답 정보 (userID와 testId 기준)
-        df['correct_ut_shift_1'] = df.groupby(['userID','testId'])['answerCode'].shift(1)
-        df['correct_ut_shift_2'] = df.groupby(['userID','testId'])['answerCode'].shift(2)
-        df['correct_ut_shift_3'] = df.groupby(['userID','testId'])['answerCode'].shift(3)
-
-        # 문제 풀이 시간 (userID와 testId에 따라 분리, 마지막은 이전 시간으로 결측치 대체)
-        df['elapsed'] = (df.groupby(['userID','testId'])['Timestamp'].shift(-1) - df['Timestamp']).apply(lambda x: x.seconds)
-        df['elapsed'] = df['elapsed'].ffill().astype('int')
-
-        # time 이상치 처리//위쪽만 처리
-        iqr = df['elapsed'].quantile(0.75) - df['elapsed'].quantile(0.25)
-        threshold = df['elapsed'].quantile(0.75) + iqr*1.5
-        def outlier(v):
-            if v > threshold:
-                return threshold+10 #이상치 기준 +10
-            return v
-        df['elapsed'] = df['elapsed'].apply(outlier)
-
-        # 문제 풀이 시간 중간값
-        agg_df = df.groupby('userID')['elapsed'].agg(['median'])
-        agg_dict = agg_df.to_dict()
-        df['elapsed_median'] = df['userID'].map(agg_dict['median'])
-
-        # 문제를 푸는 시간대
-        df['hour'] = df['Timestamp'].transform(lambda x: pd.to_datetime(x, unit='s').dt.hour)
-
-        #시간대별 정답률
-        hour_dict = df.groupby(['hour'])['answerCode'].mean().to_dict()
-        df['correct_per_hour'] = df['hour'].map(hour_dict)
-        
-        # 사용자의 주 활동 시간
-        mode_dict = df.groupby(['userID'])['hour'].agg(lambda x: pd.Series.mode(x)[0]).to_dict()
-        df['hour_mode'] = df['userID'].map(mode_dict)
-        
-        #사용자의 야행성 여부
-        df['is_night'] = df['hour_mode'] > 12
-
-        # 시간 정규화
-        df['normalized_elapsed'] = df.groupby('userID')['elapsed'].transform(lambda x: (x - x.mean())/x.std())
-
-        # 상대적 시간
-        df['relative_time'] = df.groupby('userID').apply(lambda x: x['elapsed'] - x['elapsed'].median()).values
-
-        # 문제 풀이 시간 구간으로 나누기 - 3, 5
-        df['time_cut_3'] = pd.cut(df['elapsed'], bins=3)
-        df['time_qcut_3'] = pd.qcut(df['elapsed'], q=3)
-        df['time_cut_5'] = pd.cut(df['elapsed'], bins=5)
-        df['time_qcut_5'] = pd.qcut(df['elapsed'], q=5)
-        
-        # 시간 구간 라벨 인코딩
-        df['encoded_time_cut_3'] = LabelEncoder().fit(df['time_cut_3']).transform(df['time_cut_3'])
-        df['encoded_time_qcut_3'] = LabelEncoder().fit(df['time_qcut_3']).transform(df['time_qcut_3'])
-        df['encoded_time_cut_5'] = LabelEncoder().fit(df['time_cut_5']).transform(df['time_cut_5'])
-        df['encoded_time_qcut_5'] = LabelEncoder().fit(df['time_qcut_5']).transform(df['time_qcut_5'])
-
-        # User 별 문제 수 / 정답 수 / 정답률
-        df['past_user_count'] = df.groupby('userID').cumcount()
-        df['shift'] = df.groupby('userID')['answerCode'].shift().fillna(0)
-        df['past_user_correct'] = df.groupby('userID')['shift'].cumsum()
-        df['average_user_correct'] = (df[f'past_user_correct'] / df[f'past_user_count']).fillna(0)
-        
-        # Feature 별 문제 수 / 정답 수 / 정답률
-        feature_list = ['assessmentItemID','testId','testID1','testID2','testNum','KnowledgeTag']
-        for feature in feature_list:
-            # Feature 별 계산
-            df[f'past_{feature}_count'] = df.groupby(feature).cumcount()
-            df['shift'] = df.groupby(feature)['answerCode'].shift().fillna(0)
-            df[f'past_{feature}_correct'] = df.groupby(feature)['shift'].cumsum()
-            df[f'average_{feature}_correct'] = (df[f'past_{feature}_correct'] / df[f'past_{feature}_count']).fillna(0)
-            
-        # User와 Feature 별 문제 수 / 정답 수 / 정답률
-        feature_list = ['assessmentItemID','testId','testID1','testID2','testNum','KnowledgeTag']
-        for feature in feature_list:
-            df[f'past_user_{feature}_count'] = df.groupby(feature).cumcount()
-            df['shift'] = df.groupby(feature)['answerCode'].shift().fillna(0)
-            df[f'past_user_{feature}_correct'] = df.groupby(feature)['shift'].cumsum()
-            df[f'average_user_{feature}_correct'] = (df[f'past_user_{feature}_correct'] / df[f'past_user_{feature}_count']).fillna(0)
-        
-        df = df.drop('shift', axis=1)
-        
-        # 최근 3문제를 푼 시간의 평균
-        df['avg_elapsed_3'] = df.groupby('userID')['elapsed'].rolling(window = 3, min_periods=1).mean().values
-        df['avg_elapsed_3'] = df['avg_elapsed_3'].shift(1).fillna(0)
-        
-        ################### 시우 ######################
-        # 문제 번호별 평균 정답률
-        average_testNum = df.groupby('testNum')['answerCode'].mean().to_dict()
-        df['testNum_mean'] = df['testNum'].map(average_testNum)
-        
-        # 월, 요일, 주차
-        df['month'] = df['Timestamp'].dt.month
-        df['wday'] = df['Timestamp'].dt.day_of_week
-        df['week_num'] = df['Timestamp'].dt.isocalendar().week
-        month_mean = df.groupby('month')['answerCode'].mean().to_dict()
-        df['month_mean'] = df['month'].map(month_mean)
-        
-        # 문제 대분류와 유저의 대분류별 정답률, 풓이 횟수, 풀이시간 평균
-        df['assessment_class'] = df['assessmentItemID'].map(lambda x:int(x[2]))
-        df['assessment_class_sum'] = df.groupby(['userID', 'assessment_class'])['answerCode'].cumsum()
-        df['assessment_class_count'] = df.groupby(['userID', 'assessment_class'])['answerCode'].cumcount()
-        df['assessment_class_mean'] = df['assessment_class_sum'] / df['assessment_class_count']
-        mean_solved_time = df.groupby('assessment_class')['normalized_elapsed'].mean().to_dict()
-        df['assessment_class_mean_time'] = df['assessment_class'].map(mean_solved_time)
-        
-        # 최근 3개 문제 풀이 갯수, 정답 횟수, 정답률
-        df['recent_sum'] = df.groupby('userID')['elapsed'].rolling(window = 3, min_periods=1).sum().values
-        df['recent_sum'] = df['recent_sum'].shift(1).fillna(0)
-        df['recent_mean'] = df.groupby('userID')['elapsed'].rolling(window = 3, min_periods=1).mean().values
-        df['recent_mean'] = df['recent_mean'].shift(1).fillna(0)
-        
-        ################### 재원 ######################
-        ## 시간 정규화 & 날짜 생성 (소요시간 : 5min) ##
-        df['noramalized_time'] = df.groupby(['userID','testId'])['Timestamp'].transform(lambda x: (x - x.mean()) / x.std())
-        ## Relative Feature 생성 ##
-        AnswerRate = df.groupby('assessmentItemID')['answerCode'].mean()
-        df['testIDAnswerRate'] = df['assessmentItemID'].map(AnswerRate)
-        df['relative_answered_correctly'] = df['answerCode']-df['testIDAnswerRate']
-        
-        df = df.drop(['assessmentItemID','testId','testID1','testID2','testNum','Timestamp','time_cut_3','time_qcut_3','time_cut_5','time_qcut_5'], axis=1)
-        
-        if is_train==True:
-            df.to_csv(os.path.join(self.args.data_dir, 'FE_train.csv'))
-            df = pd.read_csv(os.path.join(self.args.data_dir, 'FE_train.csv'))
-        elif is_train==False:
-            df.to_csv(os.path.join(self.args.data_dir, 'FE_test.csv'))
-            df = pd.read_csv(os.path.join(self.args.data_dir, 'FE_test.csv'))
-        
         return df
-
+    
     def load_data_from_file(self, file_name: str, is_train: bool = True) -> np.ndarray:
         csv_file_path = os.path.join(self.args.data_dir, file_name)
         df = pd.read_csv(csv_file_path)  # , nrows=100000)
@@ -379,3 +202,65 @@ def get_loaders(args, train: np.ndarray, valid: np.ndarray) -> Tuple[torch.utils
         )
 
     return train_loader, valid_loader
+
+## Copyed from Special mission
+def slidding_window(data, args):
+    window_size = args.max_seq_len
+    stride = args.stride
+
+    augmented_datas = []
+    for row in data:
+        seq_len = len(row[0])
+
+        # 만약 window 크기보다 seq len이 같거나 작으면 augmentation을 하지 않는다
+        if seq_len <= window_size:
+            augmented_datas.append(row)
+        else:
+            total_window = ((seq_len - window_size) // stride) + 1
+
+            # 앞에서부터 slidding window 적용
+            for window_i in range(total_window):
+                # window로 잘린 데이터를 모으는 리스트
+                window_data = []
+                for col in row:
+                    window_data.append(
+                        col[window_i * stride : window_i * stride + window_size]
+                    )
+
+                # Shuffle
+                # 마지막 데이터의 경우 shuffle을 하지 않는다
+                if args.shuffle and window_i + 1 != total_window:
+                    shuffle_datas = shuffle(window_data, window_size, args)
+                    augmented_datas += shuffle_datas
+                else:
+                    augmented_datas.append(tuple(window_data))
+
+            # slidding window에서 뒷부분이 누락될 경우 추가
+            total_len = window_size + (stride * (total_window - 1))
+            if seq_len != total_len:
+                window_data = []
+                for col in row:
+                    window_data.append(col[-window_size:])
+                augmented_datas.append(tuple(window_data))
+
+    return augmented_datas
+
+
+def shuffle(data, data_size, args):
+    shuffle_datas = []
+    for i in range(args.shuffle_n):
+        # shuffle 횟수만큼 window를 랜덤하게 계속 섞어서 데이터로 추가
+        shuffle_data = []
+        random_index = np.random.permutation(data_size)
+        for col in data:
+            shuffle_data.append(col[random_index])
+        shuffle_datas.append(tuple(shuffle_data))
+    return shuffle_datas
+
+
+def data_augmentation(data, args):
+    if args.window == True:
+        print("\n[4-1] Do Sliding Window Augmentation")
+        data = slidding_window(data, args)
+
+    return data
