@@ -12,3 +12,4 @@
 *.DS_Store
 /code/lgbm/FE_test.csv
 /code/lgbm/FE_train.csv
+/code/catboost/catboost_info/*
