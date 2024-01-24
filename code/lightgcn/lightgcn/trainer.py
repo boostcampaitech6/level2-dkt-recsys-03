@@ -65,6 +65,7 @@ def run(
             best_auc, best_epoch = auc, e
             torch.save(obj= {"model": model.state_dict(), "epoch": e + 1},
                        f=os.path.join(model_dir, model_name))
+            patience = 0
         else:
             patience += 1
             if patience > 20:  # 20 epoch 동안 개선이 없으면 중단
