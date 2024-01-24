@@ -255,7 +255,8 @@ def custom_train_test_split(df, ratio=0.7, split=True):
     test = df[df['userID'].isin(user_ids) == False]
 
     #test데이터셋은 각 유저의 마지막 interaction만 추출
-    test = test[test['userID'] != test['userID'].shift(-1)]
+    test = df[(df['userID'].isin(user_ids) == False) & (test['userID'] != test['userID'].shift(-1))]
+    train = df.drop(test.index)
     return train, test
 
 def prepare_dataset(args):
@@ -266,12 +267,12 @@ def prepare_dataset(args):
     total_df = pd.concat([train_df, test_df], ignore_index=True) # train,test를 합하기
     total_df.sort_values(by=['userID','Timestamp'], inplace=True)
    
-    train_df = feature_engineering(train_df, True)    
     test_df = feature_engineering(total_df, False) #train,test로 test의 FE 진행
-    
+    if args.using_train is True: #학습을 할때 Test의 앞부분 (예측 타깃 제외) 활용 여부
+        train_df = test_df[test_df['answerCode'] != 0.5]
     train_df, valid_df = custom_train_test_split(train_df)
-    # LEAVE LAST INTERACTION ONLY
-    test_df = test_df[test_df['answerCode'] == 0.5] #예측 타깃 : 0.5
+    
+    test_df = test_df[test_df['answerCode'] == 0.5] #예측 타깃(0.5)만 남기지
     
     X_train = train_df[args.feats]
     y_train = train_df['answerCode']

@@ -1,5 +1,15 @@
 import argparse
 
+def str2bool(v): #args를 bool로 받을경우의 type
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 def parse_args():
     parser = argparse.ArgumentParser()
     
@@ -11,15 +21,18 @@ def parse_args():
     parser.add_argument('--output_dir', default='outputs/', type=str, help='')
     
     parser.add_argument('--run', default='test', type=str, help='')
+    parser.add_argument('--bagging', type=str2bool, default=True, help='train에서 bagging 사용 유무')
+    parser.add_argument('--using_train', type=str2bool, default=True, help='train에서 test data(예측타깃 제외) 사용 유무')
+
     
-    parser.add_argument('--n_iterations', default=500, type=int, help='')
-    parser.add_argument('--lr', default=0.1, type=float, help='')
+    parser.add_argument('--n_iterations', default=100, type=int, help='')
+    parser.add_argument('--lr', default=0.05, type=float, help='')
     
     parser.add_argument('--num_leaves', default=64, type=int, help='')
-    parser.add_argument('--min_data_in_leaf', default=3, type=int, help='')
-    parser.add_argument('--max_depth', default=32, type=int, help='')
+    parser.add_argument('--min_data_in_leaf', default=1, type=int, help='')
+    parser.add_argument('--max_depth', default=16, type=int, help='')
     parser.add_argument('--early_stopping_round', default=3, type=int, help='')
-    parser.add_argument('--max_bin', default=100, type=int, help='')
+    parser.add_argument('--max_bin', default=50, type=int, help='')
     
     parser.add_argument('--feats', default=[
                         #기본 정보

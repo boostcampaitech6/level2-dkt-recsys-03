@@ -5,7 +5,7 @@ import seaborn as sns; sns.set_theme(color_codes=True)
 import pandas as pd
 
 
-DATA_PATH = '../lecture/data/train_data.csv'
+DATA_PATH = 'data/train_data.csv'
 
 dtype = {
     'userID': 'int16',
@@ -16,7 +16,42 @@ dtype = {
 df = pd.read_csv(DATA_PATH, dtype=dtype, parse_dates=['Timestamp'])
 df = df.sort_values(by=['userID', 'Timestamp']).reset_index(drop=True)
 
+# 각 'assessmentItemID'에 대한 정답 수를 계산합니다.
+correct_counts = df[df['answerCode'] == 1]['assessmentItemID'].value_counts()
+# 각 'assessmentItemID'에 대한 전체 문제 수를 계산합니다.
+total_counts = df['assessmentItemID'].value_counts()
+# 정답률을 계산합니다.
+correct_rates = correct_counts / total_counts
+# 결과를 출력합니다.
+print(correct_rates[correct_rates>0.7])
 
+
+# 문제 풀이 시간 (userID와 testId에 따라 분리, 마지막은 이전 시간으로 결측치 대체)
+df['elapsed'] = (df.groupby(['userID','testId'])['Timestamp'].shift(-1) - df['Timestamp']).apply(lambda x: x.seconds)
+df['elapsed'] = df['elapsed'].ffill().astype('int')
+
+# 산점도 그리기
+plt.figure(figsize=(8, 6))
+sns.scatterplot(x='elapsed', y='answerCode', data=df)
+plt.title('Elapsed Time vs Answer Code')
+plt.xlabel('Elapsed Time (seconds)')
+plt.ylabel('Answer Code')
+plt.savefig('소요시간-정답률.png')
+
+# 'elapsed' 값의 범위를 10개의 동일한 길이의 구간으로 나눕니다.
+df['elapsed_bins'] = pd.cut(df['elapsed'], bins=100)
+
+# 각 구간에 속하는 데이터의 수를 계산합니다.
+bin_counts = df['elapsed_bins'].value_counts().sort_index()
+
+# 결과를 출력합니다.
+print(bin_counts)
+
+# 각 'elapsed_bins' 구간에 대한 'answerCode'의 평균(= 정답률)을 계산합니다.
+answer_rate = df.groupby('elapsed_bins')['answerCode'].mean()
+
+# 결과를 출력합니다.
+print(answer_rate)
 ### Feature Engineering ###
 
 
