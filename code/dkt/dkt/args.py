@@ -8,10 +8,12 @@ def parse_args():
     parser.add_argument("--device", default="cpu", type=str, help="cpu or gpu")
     parser.add_argument(
         "--data_dir",
-        default="/opt/ml/input/data/",
+        default="../../data/",
         type=str,
         help="data directory",
     )
+    
+    # -- 데이터 경로 및 파일 이름 설정
     parser.add_argument(
         "--asset_dir", default="asset/", type=str, help="data directory"
     )
@@ -31,9 +33,12 @@ def parse_args():
         "--test_file_name", default="test_data.csv", type=str, help="test file name"
     )
 
+    # -- 최대 시퀀스 길이 설정
     parser.add_argument(
         "--max_seq_len", default=20, type=int, help="max sequence length"
     )
+    
+    # GPU 설정
     parser.add_argument("--num_workers", default=1, type=int, help="number of workers")
 
     # 모델
@@ -62,6 +67,16 @@ def parse_args():
         "--scheduler", default="plateau", type=str, help="scheduler type"
     )
 
+    # K-FOLD 사용 여부 결정
+    parser.add_argument("--split_method", default="general", type=str, help="data split strategy -- general OR k-fold")
+    parser.add_argument("--n_splits", default=5, type=int, help="number of k-fold splits")
+    
+    # WandB 설정
+    parser.add_argument("--wandb_project_name", default="dkt", type=str, help="Setting WandB Project Name")
+
+    # LQTR argument
+    parser.add_argument("--out_dim", default=128, type=int, help="LQTR linear hidden dim")
+    
     args = parser.parse_args()
 
     return args

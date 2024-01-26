@@ -1,4 +1,5 @@
 import os
+import random
 from typing import Tuple
 
 import pandas as pd
@@ -10,17 +11,21 @@ from lightgcn.utils import get_logger, logging_conf
 logger = get_logger(logging_conf)
 
 
-def prepare_dataset(device: str, data_dir: str) -> Tuple[dict, dict, int]:
+def prepare_dataset(device: str, data_dir: str, valid_ratio) -> Tuple[dict, dict, int]:
     data = load_data(data_dir=data_dir)
-    train_data, test_data = separate_data(data=data)
+    train_data, valid_data, test_data = separate_data(data=data, valid_ratio=valid_ratio)
     id2index: dict = indexing_data(data=data)
     train_data_proc = process_data(data=train_data, id2index=id2index, device=device)
+    valid_data_proc = process_data(data=valid_data, id2index=id2index, device=device)
     test_data_proc = process_data(data=test_data, id2index=id2index, device=device)
-
+    
     print_data_stat(train_data, "Train")
+    print_data_stat(valid_data, "Valid")
     print_data_stat(test_data, "Test")
-
-    return train_data_proc, test_data_proc, len(id2index)
+    
+    valid_data_proc["label"] = valid_data_proc["label"].to("cpu").detach().numpy()
+    
+    return train_data_proc, valid_data_proc, test_data_proc, len(id2index)
 
 
 def load_data(data_dir: str) -> pd.DataFrame: 
@@ -29,15 +34,27 @@ def load_data(data_dir: str) -> pd.DataFrame:
     data1 = pd.read_csv(path1)
     data2 = pd.read_csv(path2)
 
-    data = pd.concat([data1, data2])
+    data = pd.concat([data1, data2]).reset_index()
     data.drop_duplicates(subset=["userID", "assessmentItemID"], keep="last", inplace=True)
     return data
 
 
-def separate_data(data: pd.DataFrame) -> Tuple[pd.DataFrame]:
+def separate_data(data: pd.DataFrame, valid_ratio) -> Tuple[pd.DataFrame]:
     train_data = data[data.answerCode >= 0]
     test_data = data[data.answerCode < 0]
-    return train_data, test_data
+    train_data, valid_data = train_valid_split(train_data, valid_ratio)
+    return train_data, valid_data, test_data
+
+
+def train_valid_split(df, valid_ratio=0.2):
+    users = list(set(df['userID']))
+    random.shuffle(users)
+    user_ids = users[:round(valid_ratio*len(users))]
+    
+    # valid 데이터셋은 각 유저의 마지막 interaction만 추출
+    valid = df[df['userID'].isin(user_ids) & (df['userID'] != df['userID'].shift(-1))]
+    train = df.drop(valid.index)
+    return train, valid
 
 
 def indexing_data(data: pd.DataFrame) -> dict:
