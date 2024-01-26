@@ -84,11 +84,32 @@ class Preprocess:
             )
             return int(timestamp)
 
-        df["Timestamp"] = df["Timestamp"].apply(convert_time)
+        df["Timestamp"] = df["Timestamp"].astype('int')
         return df
-    
-    def __feature_engineering(self, df: pd.DataFrame, is_train: bool = True) -> pd.DataFrame:
-        # To-Do
+
+    def __feature_engineering(self, df: pd.DataFrame) -> pd.DataFrame:
+        #time feat 추가
+        df['Timestamp'] = pd.to_datetime(df['Timestamp'])
+        df['elapsed'] = (df.groupby(['userID','testId'])['Timestamp'].shift(-1) - df['Timestamp']).apply(lambda x: x.seconds)
+        df['elapsed'] = df['elapsed'].ffill().astype('int')
+        # time 이상치 처리
+        iqr = df['elapsed'].quantile(0.75) - df['elapsed'].quantile(0.25)
+        threshold = df['elapsed'].quantile(0.75) + iqr*1.5
+        def outlier(v):
+            if v > threshold:
+                return threshold+10 #이상치 기준 +10
+            return v
+        df['elapsed'] = df['elapsed'].apply(outlier)
+
+        #user accuracy
+        df['past_user_count'] = df.groupby('userID').cumcount()
+        df['shift'] = df.groupby('userID')['answerCode'].shift().fillna(0)
+        df['past_user_correct'] = df.groupby('userID')['shift'].cumsum()
+        df['average_user_correct'] = (df[f'past_user_correct'] / df[f'past_user_count']).fillna(0)
+        df.drop(['past_user_count','shift','past_user_correct'], axis=1)
+
+        df['elapsed'] = df['elapsed'].astype('float')
+
         return df
     
     def load_data_from_file(self, file_name: str, is_train: bool = True) -> np.ndarray:
@@ -110,7 +131,7 @@ class Preprocess:
         )
 
         df = df.sort_values(by=["userID", "Timestamp"], axis=0)
-        columns = ["userID", "assessmentItemID", "testId", "answerCode", "KnowledgeTag"]
+        columns = ["userID", "assessmentItemID", "testId", "answerCode", "KnowledgeTag","elapsed","average_user_correct"]
         group = (
             df[columns]
             .groupby("userID")
@@ -119,6 +140,8 @@ class Preprocess:
                     r["testId"].values,
                     r["assessmentItemID"].values,
                     r["KnowledgeTag"].values,
+                    r["elapsed"].values,
+                    r["average_user_correct"].values,
                     r["answerCode"].values,
                 )
             )
@@ -141,11 +164,13 @@ class DKTDataset(torch.utils.data.Dataset):
         row = self.data[index]
         
         # Load from data
-        test, question, tag, correct = row[0], row[1], row[2], row[3]
+        test, question, tag, elapsed,average_user_correct,correct = row[0], row[1], row[2], row[3],row[4], row[5] 
         data = {
             "test": torch.tensor(test + 1, dtype=torch.int),
             "question": torch.tensor(question + 1, dtype=torch.int),
             "tag": torch.tensor(tag + 1, dtype=torch.int),
+            "elapsed": torch.tensor(elapsed, dtype=torch.float),
+            "average_user_correct":torch.tensor(average_user_correct, dtype=torch.float),
             "correct": torch.tensor(correct, dtype=torch.int),
         }
 

@@ -1,5 +1,6 @@
 import os
 import argparse
+import time
 
 import torch
 import wandb
@@ -22,7 +23,7 @@ def main(args: argparse.Namespace):
     device = torch.device("cuda" if use_cuda else "cpu")
 
     logger.info("Preparing data ...")
-    train_data, test_data, n_node = prepare_dataset(device=device, data_dir=args.data_dir)
+    train_data, valid_data, test_data, n_node = prepare_dataset(device=device, data_dir=args.data_dir, valid_ratio=args.valid_ratio)
 
     logger.info("Building Model ...")
     model = trainer.build(
@@ -34,13 +35,22 @@ def main(args: argparse.Namespace):
     model = model.to(device)
     
     logger.info("Start Training ...")
+    start_time = time.time()
     trainer.run(
         model=model,
         train_data=train_data,
+        valid_data=valid_data,
         n_epochs=args.n_epochs,
         learning_rate=args.lr,
         model_dir=args.model_dir,
+        output_name=args.output_name,
+        model_name=args.model_name,
     )
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    hours, rem = divmod(elapsed_time, 3600)
+    minutes, seconds = divmod(rem, 60)
+    logger.info(f'Training Time : {int(hours)}h {int(minutes)}m {int(seconds)}s')
 
 
 if __name__ == "__main__":

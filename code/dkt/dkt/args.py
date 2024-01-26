@@ -77,6 +77,9 @@ def parse_args():
         
     ### Tfixup 관련 ###
     parser.add_argument("--Tfixup", default=False, type=bool, help="Tfixup")
+
+    # LQTR argument
+    parser.add_argument("--out_dim", default=128, type=int, help="LQTR linear hidden dim")
     
     # Argumentation 관련 #
     parser.add_argument("--window", default=True, type=bool, help="Arumentation with stride window")

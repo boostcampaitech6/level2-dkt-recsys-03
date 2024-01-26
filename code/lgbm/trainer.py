@@ -12,13 +12,13 @@ def get_params(args):
     config = {
             'seed':args.seed,
             'objective': 'binary',
-            #'num_leaves': args.num_leaves,
-            #'min_data_in_leaf':args.min_data_in_leaf,
-            #'max_depth':args.max_depth,
+            'num_leaves': args.num_leaves,
+            'min_data_in_leaf':args.min_data_in_leaf,
+            'max_depth':args.max_depth,
             #'early_stopping_round':args.early_stopping_round,
-            #'max_bin':args.max_bin,
-            #'learning_rate':args.lr,
-            #'num_iterations':args.n_iterations,
+            'max_bin':args.max_bin,
+            'learning_rate':args.lr,
+            'num_iterations':args.n_iterations,
             'metric':['auc']
             }
     return config
@@ -50,26 +50,52 @@ def feature_importance(model, valid):
 
 
 def train(args, lgb_train, lgb_valid):
-    X_valid = lgb_valid.data
-    y_valid = lgb_valid.label
+
+    if args.bagging is False: #Train 기본 모델
+        X_valid = lgb_valid.data
+        y_valid = lgb_valid.label
+        
+        model = lgb.train(
+        get_params(args),
+        lgb_train,
+        valid_sets=[lgb_train, lgb_valid],
+        #num_boost_round=500, 
+        callbacks = [wandb_callback()]
+        )
+        
+        feature_importance(model, X_valid) #Feature importance를 로깅
+        log_summary(model, save_model_checkpoint=True)
+        
+        preds = model.predict(X_valid)
+        acc = accuracy_score(y_valid, np.where(preds >= 0.5, 1, 0))
+        auc = roc_auc_score(y_valid, preds)
+        print(f'VALID AUC : {auc} ACC : {acc}\n')        
+        return model
     
-    model = lgb.train(
-    get_params(args),
-    lgb_train,
-    valid_sets=[lgb_train, lgb_valid],
-    num_boost_round=500, 
-    callbacks = [wandb_callback()]
-    )
-    
-    feature_importance(model, X_valid) #Feature importance를 로깅
-    log_summary(model, save_model_checkpoint=True)
-    
-    preds = model.predict(X_valid)
-    acc = accuracy_score(y_valid, np.where(preds >= 0.5, 1, 0))
-    auc = roc_auc_score(y_valid, preds)
-    print(f'VALID AUC : {auc} ACC : {acc}\n')
-    
-    return model
+    else: #Train에 Bagging 추가된 모델
+        X_valid = lgb_valid.data
+        y_valid = lgb_valid.label
+        
+        params = get_params(args)
+        params['boosting_type'] = 'gbdt'  # 'gbdt' 일 때만 배깅이 적용
+        params['bagging_fraction'] = 0.8  # 배깅을 적용할 데이터의 비율
+        params['bagging_freq'] = 5  # 몇 번의 반복 후에 배깅을 수행할지 설정
+        
+        model = lgb.train(
+            params,
+            lgb_train,
+            valid_sets=[lgb_train, lgb_valid],
+            callbacks=[wandb_callback()]
+        )
+        
+        feature_importance(model, X_valid)  # Feature importance를 로깅
+        log_summary(model, save_model_checkpoint=True)
+        
+        preds = model.predict(X_valid)
+        acc = accuracy_score(y_valid, np.where(preds >= 0.5, 1, 0))
+        auc = roc_auc_score(y_valid, preds)
+        print(f'VALID AUC : {auc} ACC : {acc}\n')        
+        return model
 
 def inference(args, model, X_test):
     preds = model.predict(X_test)

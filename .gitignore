@@ -5,8 +5,10 @@
 **/outputs
 **/output
 **/asset
-*.ipynb
+#*.ipynb
 *.log
 *.txt
 *.md
 *.DS_Store
+/code/lgbm/FE_test.csv
+/code/lgbm/FE_train.csv

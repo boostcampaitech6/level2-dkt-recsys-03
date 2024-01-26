@@ -194,15 +194,18 @@ def get_model(args) -> nn.Module:
         n_tags=args.n_tags,
         n_heads=args.n_heads,
         drop_out=args.drop_out,
-        max_seq_len=args.max_seq_len
-        )
+
+        max_seq_len=args.max_seq_len,
+        out_dim=args.out_dim
+    )
     try:
         model_name = args.model.lower()
         model = {
-                "lstm": LSTM,
-                "lstmattn": LSTMATTN,
-                "bert": BERT
-            }.get(model_name)(**model_args)
+            "lstm": LSTM,
+            "lstmattn": LSTMATTN,
+            "bert": BERT,
+            "lqtr": LQTR,
+        }.get(model_name)(**model_args)
         
     except KeyError:
         logger.warn("No model name %s found", model_name)

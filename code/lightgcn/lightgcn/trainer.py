@@ -35,6 +35,8 @@ def run(
     n_epochs: int = 100,
     learning_rate: float = 0.01,
     model_dir: str = None,
+    output_name: str = None,
+    model_name: str = None,
 ):
     model.train()
 
@@ -42,21 +44,9 @@ def run(
 
     os.makedirs(name=model_dir, exist_ok=True)
 
-    if valid_data is None:
-        eids = np.arange(len(train_data["label"]))
-        eids = np.random.permutation(eids)[:1000]
-        edge, label = train_data["edge"], train_data["label"]
-        label = label.to("cpu").detach().numpy()
-        valid_data = dict(edge=edge[:, eids], label=label[eids])
-        
-        # valid 데이터로 뽑힌 train 데이터 삭제
-        edge = np.array(edge)
-        train_data['edge'] = torch.tensor(np.delete(edge, eids, axis=1))
-        label = np.array(label)
-        train_data['label'] = torch.tensor(np.delete(label, eids))
-        
     logger.info(f"Training Started : n_epochs={n_epochs}")
     best_auc, best_epoch = 0, -1
+    patience = 0
     for e in range(n_epochs):
         logger.info("Epoch: %s", e)
         # TRAIN
@@ -74,10 +64,15 @@ def run(
             logger.info("Best model updated AUC from %.4f to %.4f", best_auc, auc)
             best_auc, best_epoch = auc, e
             torch.save(obj= {"model": model.state_dict(), "epoch": e + 1},
-                       f=os.path.join(model_dir, f"best_model.pt"))
-    torch.save(obj={"model": model.state_dict(), "epoch": e + 1},
-               f=os.path.join(model_dir, f"last_model.pt"))
-    logger.info(f"Best Weight Confirmed : {best_epoch+1}'th epoch")
+                       f=os.path.join(model_dir, model_name))
+            patience = 0
+        else:
+            patience += 1
+            if patience > 20:  # 20 epoch 동안 개선이 없으면 중단
+                break
+    # torch.save(obj={"model": model.state_dict(), "epoch": e + 1},
+    #            f=os.path.join(model_dir, f"last_model.pt"))
+    logger.info(f"Best Weight Confirmed : Epoch {best_epoch}")
 
 
 def train(model: nn.Module, train_data: dict, optimizer: torch.optim.Optimizer):
@@ -112,7 +107,7 @@ def validate(valid_data: dict, model: nn.Module):
     return auc, acc
 
 
-def inference(model: nn.Module, data: dict, output_dir: str):
+def inference(model: nn.Module, data: dict, output_dir: str, output_name: str):
     model.eval()
     with torch.no_grad():
         pred = model.predict_link(edge_index=data["edge"], prob=True)
@@ -120,6 +115,6 @@ def inference(model: nn.Module, data: dict, output_dir: str):
     logger.info("Saving Result ...")
     pred = pred.detach().cpu().numpy()
     os.makedirs(name=output_dir, exist_ok=True)
-    write_path = os.path.join(output_dir, "submission.csv")
+    write_path = os.path.join(output_dir, f"submission_{output_name}.csv")
     pd.DataFrame({"prediction": pred}).to_csv(path_or_buf=write_path, index_label="id")
     logger.info("Successfully saved submission as %s", write_path)

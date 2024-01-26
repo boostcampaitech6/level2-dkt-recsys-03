@@ -61,7 +61,6 @@ def main(args):
                                    "state_dict": k_th_model.state_dict() },
                             model_dir=args.model_dir,
                             model_filename= str(k_th + 1) + "th_fold_best_model.pt")
-
             
         #---------------------KFold 결과 출력----------------------
         for i in range(n_splits):
