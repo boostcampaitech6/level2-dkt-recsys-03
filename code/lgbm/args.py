@@ -25,7 +25,7 @@ def parse_args():
     parser.add_argument('--using_train', type=str2bool, default=True, help='train에서 test data(예측타깃 제외) 사용 유무')
 
     
-    parser.add_argument('--n_iterations', default=100, type=int, help='')
+    parser.add_argument('--n_iterations', default=200, type=int, help='')
     parser.add_argument('--lr', default=0.05, type=float, help='')
     
     parser.add_argument('--num_leaves', default=64, type=int, help='')

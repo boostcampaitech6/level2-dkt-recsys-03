@@ -235,29 +235,16 @@ def feature_engineering(df, is_train):
     
     return df
 
-def custom_train_test_split(df, ratio=0.7, split=True):
+def custom_train_test_split(df, ratio=0.8, split=True):
 
-    users = list(zip(df['userID'].value_counts().index, df['userID'].value_counts()))
+    users = list(set(df['userID']))
     random.shuffle(users)
+    user_ids = users[:round(ratio*len(users))]
 
-    max_train_data_len = ratio*len(df)
-    sum_of_train_data = 0
-    user_ids =[]
-
-    for user_id, count in users:
-        sum_of_train_data += count
-        if max_train_data_len < sum_of_train_data:
-            break
-        user_ids.append(user_id)
-
-
-    train = df[df['userID'].isin(user_ids)]
-    test = df[df['userID'].isin(user_ids) == False]
-
-    #test데이터셋은 각 유저의 마지막 interaction만 추출
-    test = df[(df['userID'].isin(user_ids) == False) & (test['userID'] != test['userID'].shift(-1))]
+    test = df[df['userID'].isin(user_ids) & (df['userID'] != df['userID'].shift(-1))]
     train = df.drop(test.index)
     return train, test
+
 
 def prepare_dataset(args):
     train_df = pd.read_csv(os.path.join(args.data_dir, 'train_data.csv'))
