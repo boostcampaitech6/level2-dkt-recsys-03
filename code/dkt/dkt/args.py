@@ -73,6 +73,9 @@ def parse_args():
     
     # WandB 설정
     parser.add_argument("--wandb_project_name", default="dkt", type=str, help="Setting WandB Project Name")
+
+    # LQTR argument
+    parser.add_argument("--out_dim", default=128, type=int, help="LQTR linear hidden dim")
     
     args = parser.parse_args()
 
