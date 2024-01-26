@@ -76,6 +76,10 @@ def parse_args():
 
     # LQTR argument
     parser.add_argument("--out_dim", default=128, type=int, help="LQTR linear hidden dim")
+
+    #augmentation
+    parser.add_argument("--aug", default=False, type=bool, help="augmentation")
+    parser.add_argument("--window", default=20, type=int, help="window length")
     
     args = parser.parse_args()
 

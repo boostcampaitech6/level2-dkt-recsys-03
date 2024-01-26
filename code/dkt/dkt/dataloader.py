@@ -104,7 +104,8 @@ class Preprocess:
         return df
     #do augmentation
     def __augmentation(self, group, is_train: bool = True) -> pd.DataFrame:
-        if is_train and self.args.aug == "window":
+        if is_train and self.args.aug:
+            print("do aug")
             window = self.args.window
             augmented_data = []
             cols = len(group[0])
@@ -157,7 +158,11 @@ class Preprocess:
                 )
             )
         )
-        return group.values
+
+        #augmentation
+        group = self.__augmentation(group, is_train)
+
+        return group
 
     def load_train_data(self, file_name: str) -> None:
         self.train_data = self.load_data_from_file(file_name)
