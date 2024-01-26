@@ -3,10 +3,12 @@ import random
 import time
 from datetime import datetime
 from typing import Tuple
+from easydict import EasyDict
 
 import numpy as np
 import pandas as pd
 import torch
+from torch.nn.utils.rnn import pad_sequence
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -34,10 +36,16 @@ class Preprocess:
             random.seed(seed)  # fix to default seed 0
             random.shuffle(data)
 
-        size = int(len(data) * ratio)
-        data_1 = data[:size]
-        data_2 = data[size:]
-        return data_1, data_2
+        if self.args.split_method == "general":
+            size = int(len(data) * ratio)
+            data_1 = data[:size]
+            data_2 = data[size:]
+            return data_1, data_2
+        
+        elif self.args.split_method == "kfold":
+            data_1 = data[:]
+            data_2 = None
+            return data_1, data_2
 
     def __save_labels(self, encoder: LabelEncoder, name: str) -> None:
         le_path = os.path.join(self.args.asset_dir, name + "_classes.npy")
@@ -63,6 +71,7 @@ class Preprocess:
                 df[col] = df[col].apply(
                     lambda x: x if str(x) in le.classes_ else "unknown"
                 )
+                
 
             # 모든 컬럼이 범주형이라고 가정
             df[col] = df[col].astype(str)
@@ -102,7 +111,7 @@ class Preprocess:
         df['elapsed'] = df['elapsed'].astype('float')
 
         return df
-
+    
     def load_data_from_file(self, file_name: str, is_train: bool = True) -> np.ndarray:
         csv_file_path = os.path.join(self.args.data_dir, file_name)
         df = pd.read_csv(csv_file_path)  # , nrows=100000)
@@ -219,3 +228,64 @@ def get_loaders(args, train: np.ndarray, valid: np.ndarray) -> Tuple[torch.utils
         )
 
     return train_loader, valid_loader
+
+def slidding_window(data, args):
+    window_size = args.max_seq_len
+    stride = args.stride
+
+    augmented_datas = []
+    for row in data:
+        seq_len = len(row[0])
+
+        # 만약 window 크기보다 seq len이 같거나 작으면 augmentation을 하지 않는다
+        if seq_len <= window_size:
+            augmented_datas.append(row)
+        else:
+            total_window = ((seq_len - window_size) // stride) + 1
+
+            # 앞에서부터 slidding window 적용
+            for window_i in range(total_window):
+                # window로 잘린 데이터를 모으는 리스트
+                window_data = []
+                for col in row:
+                    window_data.append(
+                        col[window_i * stride : window_i * stride + window_size]
+                    )
+
+                # Shuffle
+                # 마지막 데이터의 경우 shuffle을 하지 않는다
+                if args.shuffle and window_i + 1 != total_window:
+                    shuffle_datas = shuffle(window_data, window_size, args)
+                    augmented_datas += shuffle_datas
+                else:
+                    augmented_datas.append(tuple(window_data))
+
+            # slidding window에서 뒷부분이 누락될 경우 추가
+            total_len = window_size + (stride * (total_window - 1))
+            if seq_len != total_len:
+                window_data = []
+                for col in row:
+                    window_data.append(col[-window_size:])
+                augmented_datas.append(tuple(window_data))
+
+    return augmented_datas
+
+
+def shuffle(data, data_size, args):
+    shuffle_datas = []
+    for i in range(args.shuffle_n):
+        # shuffle 횟수만큼 window를 랜덤하게 계속 섞어서 데이터로 추가
+        shuffle_data = []
+        random_index = np.random.permutation(data_size)
+        for col in data:
+            shuffle_data.append(col[random_index])
+        shuffle_datas.append(tuple(shuffle_data))
+    return shuffle_datas
+
+
+def data_augmentation(data, args):
+    if args.window == True:
+        print("\n[4-1] Do Sliding Window Augmentation")
+        data = slidding_window(data, args)
+
+    return data
