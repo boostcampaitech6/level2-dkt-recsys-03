@@ -29,11 +29,19 @@ class ModelBase(nn.Module):
 
         # Concatentaed Embedding Projection
         self.comb_proj = nn.Linear(intd * 4, hd)
+        self.cont_porj = nn.Sequential(
+                            nn.Linear(2, intd),
+                            nn.LayerNorm(intd)
+                            )
+        self.concat = nn.Sequential(nn.ReLU(),
+                          nn.Linear(intd+hd, hd),
+                          nn.LayerNorm(hd))
+
 
         # Fully connected layer
         self.fc = nn.Linear(hd, 1)
     
-    def forward(self, test, question, tag, correct, mask, interaction):
+    def forward(self, test, question, tag, elapsed, average_user_correct, correct, mask, interaction):
         batch_size = interaction.size(0)
         # Embedding
         embed_interaction = self.embedding_interaction(interaction.int())
@@ -49,7 +57,12 @@ class ModelBase(nn.Module):
             ],
             dim=2,
         )
-        X = self.comb_proj(embed)
+
+        X = self.comb_proj(embed) 
+        cont_X = self.cont_porj(torch.cat([elapsed.float().unsqueeze(-1),average_user_correct.unsqueeze(-1)], dim=2))
+        X = torch.cat([X, cont_X],dim=2)
+        X = self.concat(X)
+
         return X, batch_size
 
 
@@ -74,10 +87,12 @@ class LSTM(ModelBase):
             self.hidden_dim, self.hidden_dim, self.n_layers, batch_first=True
         )
 
-    def forward(self, test, question, tag, correct, mask, interaction):
+    def forward(self, test, question, tag, elapsed, average_user_correct, correct, mask, interaction):
         X, batch_size = super().forward(test=test,
                                         question=question,
                                         tag=tag,
+                                        elapsed = elapsed, 
+                                        average_user_correct = average_user_correct,
                                         correct=correct,
                                         mask=mask,
                                         interaction=interaction)
@@ -122,10 +137,12 @@ class LSTMATTN(ModelBase):
         )
         self.attn = BertEncoder(self.config)
 
-    def forward(self, test, question, tag, correct, mask, interaction):
+    def forward(self, test, question, tag, elapsed, average_user_correct, correct, mask, interaction):
         X, batch_size = super().forward(test=test,
                                         question=question,
                                         tag=tag,
+                                        elapsed = elapsed, 
+                                        average_user_correct = average_user_correct,
                                         correct=correct,
                                         mask=mask,
                                         interaction=interaction)
@@ -177,10 +194,12 @@ class BERT(ModelBase):
         )
         self.encoder = BertModel(self.config)
 
-    def forward(self, test, question, tag, correct, mask, interaction):
+    def forward(self, test, question, tag, elapsed, average_user_correct, correct, mask, interaction):
         X, batch_size = super().forward(test=test,
                                         question=question,
                                         tag=tag,
+                                        elapsed = elapsed, 
+                                        average_user_correct = average_user_correct,
                                         correct=correct,
                                         mask=mask,
                                         interaction=interaction)
@@ -306,6 +325,8 @@ class LQTR(ModelBase):
         X, batch_size = super().forward(test=test,
                                         question=question,
                                         tag=tag,
+                                        elapsed = elapsed, 
+                                        average_user_correct = average_user_correct,
                                         correct=correct,
                                         mask=mask,
                                         interaction=interaction)
