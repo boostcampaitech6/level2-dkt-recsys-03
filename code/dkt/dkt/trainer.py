@@ -107,8 +107,7 @@ def train(train_loader: torch.utils.data.DataLoader,
     losses = []
     for step, batch in enumerate(train_loader):
         batch = {k: v.to(args.device) for k, v in batch.items()}
-        # print(batch)
-        # print("Here I Stand For You")
+
         preds = model(**batch)
         targets = batch["correct"]
         
@@ -204,9 +203,12 @@ def get_model(args) -> nn.Module:
                 "lstmattn": LSTMATTN,
                 "bert": BERT
             }.get(model_name)(**model_args)
-    except:
-        if args.model == "saint":
-            model = Saint(args)
+        
+    except KeyError:
+        logger.warn("No model name %s found", model_name)
+    except Exception as e:
+        logger.warn("Error while loading %s with args: %s", model_name, model_args)
+        raise e
     return model
 
 
