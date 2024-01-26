@@ -88,6 +88,7 @@ class Preprocess:
         return df
     
     def __feature_engineering(self, df: pd.DataFrame, is_train: bool = True) -> pd.DataFrame:
+        # To-Do
         return df
     
     def load_data_from_file(self, file_name: str, is_train: bool = True) -> np.ndarray:
@@ -203,7 +204,6 @@ def get_loaders(args, train: np.ndarray, valid: np.ndarray) -> Tuple[torch.utils
 
     return train_loader, valid_loader
 
-## Copyed from Special mission
 def slidding_window(data, args):
     window_size = args.max_seq_len
     stride = args.stride

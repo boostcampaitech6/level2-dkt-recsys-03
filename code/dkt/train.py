@@ -60,11 +60,12 @@ def main(args):
             save_checkpoint(state={"Fold_num": k_th + 1,
                                    "state_dict": k_th_model.state_dict() },
                             model_dir=args.model_dir,
-                            model_filename= str(k_th + 1) + "best_model.pt")
+                            model_filename= str(k_th + 1) + "th_fold_best_model.pt")
 
             
         #---------------------KFold 결과 출력----------------------
         for i in range(n_splits):
+            
             print(f"Best AUC for {i+1}th fold is : {kfold_auc_list[i]}")
         print(f"The Average AUC of the model is : {sum(kfold_auc_list) / n_splits:.4f}")
 
