@@ -27,7 +27,6 @@ def main(args):
     train_data: np.ndarray = preprocess.get_train_data()
     
     if args.split_method == "general":
-        none_list = []
         print("Using general Method")
         none_list = []
         train_data, valid_data = preprocess.split_data(data=train_data)
