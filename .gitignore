@@ -5,7 +5,6 @@
 **/outputs
 **/output
 **/asset
-*.ipynb
 *.log
 *.txt
 *.md
