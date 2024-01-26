@@ -302,7 +302,7 @@ class LQTR(ModelBase):
             nn.Linear(self.out_dim,1)
         )
 
-    def forward(self, test, question, tag, correct, mask, interaction):
+    def forward(self, test, question, tag, elapsed, average_user_correct, correct, mask, interaction):
         X, batch_size = super().forward(test=test,
                                         question=question,
                                         tag=tag,
@@ -313,8 +313,6 @@ class LQTR(ModelBase):
         self.q = self.query(X)
         self.k = self.key(X)
         self.v = self.value(X)
-        #positional encoding
-        #pos_encoded = self.pos_emb(X)
 
         #encoding(not positional emb) #use only last query
         attn_output,_ = self.attn(query=self.q[:,-1:,:],key=self.k,value=self.v)
@@ -327,6 +325,7 @@ class LQTR(ModelBase):
         #lstm
         out, _ = self.lstm(addnorm2_output)
         out = out.contiguous().view(batch_size, -1, self.hidden_dim)
-        out = self.dnn(out).view(batch_size, -1)
+        #use fc instead of DNN
+        out = self.fc(out).view(batch_size, -1)
 
         return out
