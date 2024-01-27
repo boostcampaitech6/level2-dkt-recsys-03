@@ -88,6 +88,9 @@ class Preprocess:
         return df
 
     def __feature_engineering(self, df: pd.DataFrame) -> pd.DataFrame:
+        #유저별 시퀀스를 고려하기 위해 아래와 같이 정렬
+        df.sort_values(by=['userID','Timestamp'], inplace=True)
+        
         #time feat 추가
         df['Timestamp'] = pd.to_datetime(df['Timestamp'])
         df['elapsed'] = (df.groupby(['userID','testId'])['Timestamp'].shift(-1) - df['Timestamp']).apply(lambda x: x.seconds)

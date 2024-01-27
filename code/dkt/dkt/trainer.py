@@ -203,6 +203,8 @@ def get_model(args) -> nn.Module:
         model = {
             "lstm": LSTM,
             "lstmattn": LSTMATTN,
+            "gru": GRU,
+            "gruattn": GRUATTN,
             "bert": BERT,
             "lqtr": LQTR,
         }.get(model_name)(**model_args)
