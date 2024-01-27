@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 from transformers.models.bert.modeling_bert import BertConfig, BertEncoder, BertModel
-
+import math
+import numpy as np
 
 class ModelBase(nn.Module):
     def __init__(

@@ -6,11 +6,12 @@ import torch
 from torch import nn
 from torch import sigmoid
 import wandb
+import gc
 
 from .criterion import get_criterion
-from .dataloader import get_loaders
+from .dataloader import get_loaders, data_augmentation
 from .metric import get_metric
-from .model import LSTM, LSTMATTN, BERT, LQTR
+from .model import *
 from .optimizer import get_optimizer
 from .scheduler import get_scheduler
 from .utils import get_logger, logging_conf
@@ -25,7 +26,17 @@ def run(args,
         kfold_auc_list: list,
         model: nn.Module):
     
-    train_loader, valid_loader = get_loaders(args=args, train=train_data, valid=valid_data)
+    # 캐시 메모리 비우기 및 가비지 컬렉터 가동!
+    torch.cuda.empty_cache()
+    gc.collect()
+
+    # augmentation
+    augmented_train_data = data_augmentation(train_data, args)
+
+    if len(augmented_train_data) != len(train_data):
+        print(f"Data Augmentation applied. Train data {len(train_data)} -> {len(augmented_train_data)}\n")
+    
+    train_loader, valid_loader = get_loaders(args=args, train=augmented_train_data, valid=valid_data)\
 
     # For warmup scheduler which uses step interval
     args.total_steps = int(math.ceil(len(train_loader.dataset) / args.batch_size)) * (
@@ -80,12 +91,15 @@ def run(args,
 
     # auc 결과 list에 저장하여 비교
     kfold_auc_list.append(best_auc)
+    
+    return model_to_save
 
 def train(train_loader: torch.utils.data.DataLoader,
           model: nn.Module,
           optimizer: torch.optim.Optimizer,
           scheduler: torch.optim.lr_scheduler._LRScheduler,
           args):
+    
     model.train()
 
     total_preds = []
@@ -93,15 +107,16 @@ def train(train_loader: torch.utils.data.DataLoader,
     losses = []
     for step, batch in enumerate(train_loader):
         batch = {k: v.to(args.device) for k, v in batch.items()}
+
         preds = model(**batch)
         targets = batch["correct"]
         
         loss = compute_loss(preds=preds, targets=targets)
         update_params(loss=loss, model=model, optimizer=optimizer,
                       scheduler=scheduler, args=args)
-
-        if step % args.log_steps == 0:
-            logger.info("Training steps: %s Loss: %.4f", step, loss.item())
+        
+        #if step % args.log_steps == 0:
+        #    logger.info("Training steps: %s Loss: %.4f", step, loss.item())
 
         # predictions
         preds = sigmoid(preds[:, -1])
@@ -170,7 +185,7 @@ def inference(args, test_data: np.ndarray, model: nn.Module) -> None:
     logger.info("Successfully saved submission as %s", write_path)
 
 
-def get_model(args) -> nn.Module:
+def get_model(args) -> nn.Module:    
     model_args = dict(
         hidden_dim=args.hidden_dim,
         n_layers=args.n_layers,
@@ -179,6 +194,7 @@ def get_model(args) -> nn.Module:
         n_tags=args.n_tags,
         n_heads=args.n_heads,
         drop_out=args.drop_out,
+
         max_seq_len=args.max_seq_len,
         out_dim=args.out_dim
     )
@@ -190,6 +206,7 @@ def get_model(args) -> nn.Module:
             "bert": BERT,
             "lqtr": LQTR,
         }.get(model_name)(**model_args)
+        
     except KeyError:
         logger.warn("No model name %s found", model_name)
     except Exception as e:

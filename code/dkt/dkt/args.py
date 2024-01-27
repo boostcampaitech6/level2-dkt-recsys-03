@@ -5,7 +5,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--seed", default=42, type=int, help="seed")
-    parser.add_argument("--device", default="cpu", type=str, help="cpu or gpu")
+    parser.add_argument("--device", default="gpu", type=str, help="cpu or gpu")
     parser.add_argument(
         "--data_dir",
         default="../../data/",
@@ -48,6 +48,7 @@ def parse_args():
     parser.add_argument("--n_layers", default=2, type=int, help="number of layers")
     parser.add_argument("--n_heads", default=2, type=int, help="number of heads")
     parser.add_argument("--drop_out", default=0.2, type=float, help="drop out rate")
+    
 
     # 훈련
     parser.add_argument("--n_epochs", default=20, type=int, help="number of epochs")
@@ -73,6 +74,9 @@ def parse_args():
     
     # WandB 설정
     parser.add_argument("--wandb_project_name", default="dkt", type=str, help="Setting WandB Project Name")
+        
+    ### Tfixup 관련 ###
+    parser.add_argument("--Tfixup", default=False, type=bool, help="Tfixup")
 
     # LQTR argument
     parser.add_argument("--out_dim", default=128, type=int, help="LQTR linear hidden dim")
@@ -81,6 +85,12 @@ def parse_args():
     parser.add_argument("--aug", default=False, type=bool, help="augmentation")
     parser.add_argument("--window", default=20, type=int, help="window length")
     
+    # Argumentation 관련 #
+    parser.add_argument("--window", default=True, type=bool, help="Arumentation with stride window")
+    parser.add_argument("--shuffle", default=False, type=bool, help="data shuffle option")
+    parser.add_argument("--stride", default=101, type=int)
+    parser.add_argument("--shuffle_n", default= 3, type=int)
+
     args = parser.parse_args()
 
     return args
