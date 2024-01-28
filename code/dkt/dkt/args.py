@@ -80,6 +80,10 @@ def parse_args():
 
     # LQTR argument
     parser.add_argument("--out_dim", default=128, type=int, help="LQTR linear hidden dim")
+
+    #augmentation
+    parser.add_argument("--aug", default=False, type=bool, help="augmentation")
+    parser.add_argument("--window", default=20, type=int, help="window length")
     
     # Argumentation 관련 #
     parser.add_argument("--window", default=True, type=bool, help="Arumentation with stride window")

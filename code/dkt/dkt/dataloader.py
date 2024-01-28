@@ -114,7 +114,28 @@ class Preprocess:
         df['elapsed'] = df['elapsed'].astype('float')
 
         return df
-    
+    #do augmentation
+    def __augmentation(self, group, is_train: bool = True) -> pd.DataFrame:
+        if is_train and self.args.aug:
+            print("do aug")
+            window = self.args.window
+            augmented_data = []
+            cols = len(group[0])
+            row = 0
+            for user in group:
+                current_seq_len = len(user[0])
+                for i in range(0, current_seq_len - window + 1, window):
+                    augmented_data.append([])
+                    for c in range(cols):
+                        augmented_data[row].append(user[c][i:i+window])
+                    row += 1
+        
+            augmented_data += list(group.values)
+            return augmented_data
+
+        else:
+            return group.values
+
     def load_data_from_file(self, file_name: str, is_train: bool = True) -> np.ndarray:
         csv_file_path = os.path.join(self.args.data_dir, file_name)
         df = pd.read_csv(csv_file_path)  # , nrows=100000)
@@ -149,7 +170,11 @@ class Preprocess:
                 )
             )
         )
-        return group.values
+
+        #augmentation
+        group = self.__augmentation(group, is_train)
+
+        return group
 
     def load_train_data(self, file_name: str) -> None:
         self.train_data = self.load_data_from_file(file_name)
