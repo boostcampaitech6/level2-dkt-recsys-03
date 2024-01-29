@@ -23,7 +23,7 @@ conda init
 * `criterion.py`: Loss를 포함합니다.
 * `datloader.py`: dataloader를 불러옵니다.
 * `metric.py`: metric 계산하는 함수를 포함합니다.
-* `model.py`: 여러 모델 소스 코드를 포함합니다. `LSTM`, `LSTMATTN`, `BERT`를 가지고 있습니다.
+* `model.py`: 여러 모델 소스 코드를 포함합니다. `LSTM`, `LSTMATTN`, `GRU`, `GRUATTN`, `BERT`, `LQTR`를 가지고 있습니다.
 * `optimizer.py`: optimizer를 instantiate할 수 있는 소스코드를 포함합니다.
 * `scheduler.py`: scheduler 소스코드를 포함합니다.
 * `trainer.py`: 훈련에 사용되는 함수들을 포함합니다.
