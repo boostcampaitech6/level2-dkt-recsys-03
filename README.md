@@ -1,6 +1,6 @@
 # Deep Knowledge Tracing (DKT)
 
-## OverVIew
+## OverView
 최근 들어서 데이터 사이언스를 이용해 자신의 학습을 상태를 파악하는 서비스가 배포되고 있다.  
 Riiid의 산타토익과 같이, 수험자의 문제풀이 데이터를 바탕으로 강점과 약점을 파악해 이를 보완할 다음 문제를 제시하는 방식이다.   
 시험을 통해서는 우리 개개인에 맞춤화된 피드백을 받기가 어렵고 따라서 무엇을 해야 성적을 올릴 수 있을지 판단하기 어렵다.   
@@ -11,7 +11,7 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
 
 ### Task
 각 학생이 푼 문제 리스트와 정답 여부가 담긴 데이터를 받아 userID별 마지막 문제를 맞출지 틀릴지 예측
-
+<br><br>
 
 ## Component
 
@@ -37,7 +37,7 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
 ### 데이터셋 구조
 
 <p align="left"><img src="https://github.com/boostcampaitech6/level2-dkt-recsys-03/assets/43164670/5c9b4041-c426-4ccf-aec0-c6ab664a02f1" width="500"/></p>
-<br>
+<br><br>
 
 
 ## Team
@@ -85,6 +85,7 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
   </tr>
 </table>
 &nbsp;
+<br>
 
 ## Role
 
@@ -96,7 +97,7 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
 | 이재권 | EDA. 데이터 전처리, feature engineering, LightGCN 실험 |
 | 이진민 | EDA, 데이터 전처리, feature engineering, LightGBM feature 실험, FM, FFM 구현 및 실험 |
 | 장재원 | EDA, 데이터 전처리, feature engineering, LightGBM 고도화 |
-
+<br>
 
 ## Experiment Result
 
@@ -127,8 +128,8 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
                  + FFM(0.025) + LQTR(0.025) + LightGCN(0.025) + GRU(0.0125) + BERT(0.0125)]
 
 최종적으로 Public AUC 기준 가장 높았던 Ensemble 2, Public ACC 기준 가장 높았던 Ensemble 1 제출
-
-
+<br><br>
 
 ## Wrap-Up Report
 [DKT Wrap-up Report - Suggestify.pdf](./DKT.Wrap-up.Report.-.Suggestify.pdf)
+<br>
