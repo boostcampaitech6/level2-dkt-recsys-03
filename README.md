@@ -44,7 +44,7 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
 
 ## Team
 <br>
-<table align="center">
+<table align="left">
   <tr height="155px">
     <td align="center" width="150px">
       <a href="https://github.com/ksb3966"><img src="https://github.com/ksb3966.png" width="100px;" alt=""/></a>
