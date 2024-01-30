@@ -12,9 +12,8 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
 ### Task
 각 학생이 푼 문제 리스트와 정답 여부가 담긴 데이터를 받아 userID별 마지막 문제를 맞출지 틀릴지 예측
 
-
-
 ---
+
 ## Component
 
 ### 프로젝트 디렉토리 구조 
@@ -38,12 +37,13 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
 ```
 ### 데이터셋 구조
 
-<p align="center"><img src="https://private-user-images.githubusercontent.com/83735049/300716806-4977afb6-3db4-4fb2-adb6-9b4257c8a8cc.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MDY2MDAyNzIsIm5iZiI6MTcwNjU5OTk3MiwicGF0aCI6Ii84MzczNTA0OS8zMDA3MTY4MDYtNDk3N2FmYjYtM2RiNC00ZmIyLWFkYjYtOWI0MjU3YzhhOGNjLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDAxMzAlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwMTMwVDA3MzI1MlomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTU1NWEwN2U5NjRlMjZhYzc5N2M4MWMyMDBjYTEzNmI1MjcwMWE5ZWQ4Nzk5MTAwNThhNTFmOWMxMWE3NzEyYzUmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.KDUF5ck5WQfsNbTyWcflu0syr6h1M1DoYPrT8TBS0e8" width="700"/></p>
-<br>
+
+<img src="https://private-user-images.githubusercontent.com/83735049/300716806-4977afb6-3db4-4fb2-adb6-9b4257c8a8cc.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MDY2MDI0NjcsIm5iZiI6MTcwNjYwMjE2NywicGF0aCI6Ii84MzczNTA0OS8zMDA3MTY4MDYtNDk3N2FmYjYtM2RiNC00ZmIyLWFkYjYtOWI0MjU3YzhhOGNjLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDAxMzAlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwMTMwVDA4MDkyN1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTZhZmU4MGY1YmQ0NDRjZmRhMzE4ZjI2ZTIwNGQyZTc5OTVhNDdmMWFlYzYzMWNkMTIzNDY0OTNkZWZlNTJjYzMmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.aSP3vcFAtNkgNflfmbB2hNV2Fv8-Cq6npIdWCGKvRTw" width="500"/>
 
 ---
 
 ## Team
+<br>
 <table align="center">
   <tr height="155px">
     <td align="center" width="150px">
@@ -86,7 +86,10 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
     </td>
   </tr>
 </table>
-&nbsp;
+&nbsp;  
+<br>
+
+
 
 ## Role
 
