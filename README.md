@@ -12,7 +12,6 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
 ### Task
 각 학생이 푼 문제 리스트와 정답 여부가 담긴 데이터를 받아 userID별 마지막 문제를 맞출지 틀릴지 예측
 
----
 
 ## Component
 
@@ -37,8 +36,9 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
 ```
 ### 데이터셋 구조
 
-<p align="center"><img src="https://github.com/boostcampaitech6/level2-dkt-recsys-03/assets/43164670/5c9b4041-c426-4ccf-aec0-c6ab664a02f1" width="500"/></p>
----
+<p align="left"><img src="https://github.com/boostcampaitech6/level2-dkt-recsys-03/assets/43164670/5c9b4041-c426-4ccf-aec0-c6ab664a02f1" width="500"/></p>
+<br>
+
 
 ## Team
 <br>
@@ -97,15 +97,14 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
 | 이진민 | EDA, 데이터 전처리, feature engineering, LightGBM feature 실험, FM, FFM 구현 및 실험 |
 | 장재원 | EDA, 데이터 전처리, feature engineering, LightGBM 고도화 |
 
----
 
 ## Experiment Result
 
 ### Single Model Result
 |  | Public AUC | Public ACC | Private AUC | Private ACC |
 | --- | --- | --- | --- | --- |
-| LightGBM | 0.8198 | 0.7554 | 0.8406 | 0.7688 |
-| XGBoost | 0.8093 | 0.7366 | 0.8498 | 0.7688 |
+| LightGBM | **0.8198** | **0.7554** | 0.8406 | **0.7688** |
+| XGBoost | 0.8093 | 0.7366 | **0.8498** | **0.7688** |
 | CatBoost | 0.7876 | 0.7285 | 0.8172 | 0.7473 |
 | GRU | 0.7381 | 0.6828 | 0.8028 | 0.7392 |
 | BERT | 0.7378 | 0.6828 | 0.7698 | 0.7043 |
@@ -116,8 +115,8 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
 ### Ensemble Result
 |  | Public AUC | Public ACC | Private AUC | Private ACC |
 | --- | --- | --- | --- | --- |
-| Ensemble 1 | 0.8160 | 0.7634 | 0.8475 | 0.7661 |
-| Ensemble 2 | 0.8208 | 0.7581 | 0.8401 | 0.7500 |
+| Ensemble 1 | 0.8160 | **0.7634** | **0.8475** | **0.7661** |
+| Ensemble 2 | **0.8208** | 0.7581 | 0.8401 | 0.7500 |
 | Ensemble 3 | 0.8168 | 0.7608 | 0.8435 | 0.7554 |
 
     Ensemble 1 : LGBM_TTFE(0.5) + XGBoost(0.5)
@@ -131,5 +130,5 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
 
 
 
-### Wrap-Up Report
+## Wrap-Up Report
 [DKT Wrap-up Report - Suggestify.pdf](./DKT.Wrap-up.Report.-.Suggestify.pdf)
