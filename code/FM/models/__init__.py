@@ -1,0 +1,2 @@
+from .FFM import FieldAwareFactorizationMachineModel
+from .FM import FactorizationMachineModel
