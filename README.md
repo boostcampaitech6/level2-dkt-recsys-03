@@ -137,4 +137,4 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
 
 
 ### Wrap-Up Report
-[DKT Wrap-up Report - Suggestify.pdf](https://github.com/boostcampaitech6/level2-dkt-recsys-03/files/14094628/DKT.Wrap-up.Report.-.Suggestify.pdf)
+[DKT Wrap-up Report - Suggestify.pdf](./DKT.Wrap-up.Report.-.Suggestify.pdf)
