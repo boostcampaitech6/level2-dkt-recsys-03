@@ -37,8 +37,7 @@ DKT를 활용하면 우리는 학생 개개인에게 수학의 이해도와 취�
 ```
 ### 데이터셋 구조
 
-<img src="\https://private-user-images.githubusercontent.com/83735049/300716806-4977afb6-3db4-4fb2-adb6-9b4257c8a8cc.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MDY2MDMwMDUsIm5iZiI6MTcwNjYwMjcwNSwicGF0aCI6Ii84MzczNTA0OS8zMDA3MTY4MDYtNDk3N2FmYjYtM2RiNC00ZmIyLWFkYjYtOWI0MjU3YzhhOGNjLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDAxMzAlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwMTMwVDA4MTgyNVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWQ0YzU2NTJiYmI0MmZkN2M1MGRkOTUxMDY0MjU1Y2Q0ZWJmMjg5YTk3ODZhYmNlYWZiYjUyODI5MDg1NThmYzkmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.bCrF0MpYLjQpVPwl14dIxPgrrFz28zTCMvDgvUFrRB0" width="500"/>
-
+<p align="center"><img src="https://github.com/boostcampaitech6/level2-dkt-recsys-03/assets/43164670/5c9b4041-c426-4ccf-aec0-c6ab664a02f1" width="500"/></p>
 ---
 
 ## Team
